@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+.input {
+  @apply w-full
+}
+
+.btn {
+  @apply px-5
+}
+
+.btn.blue {
+  @apply bg-blue-500 text-white
+}
+
+.btn.red {
+  @apply bg-red-500 text-white
+}
+
+.section {
+  @apply flex gap-2 w-full
+}
