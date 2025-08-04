@@ -1,72 +1,132 @@
-<script>
-import { membershipShow, roomClear, roomJoin, roomLeave, roomStart, vote, voteClear } from "$lib/socket"
-import { r } from "$lib/store"
+<script lang="ts">
+import {
+  roomClear,
+  roomJoin,
+  roomLeave,
+  roomStart,
+  vote,
+  voteClear,
+} from "$lib/socket";
+import { Membership, r } from "$lib/store";
 
-let name = $state("")
+let name = $state("");
+let showOwnSecrets = $state(false);
+
+// player info
+const player = $derived($r.players.find((player) => player.id === $r.selfId))
+const canSeeAllMemberships = $derived(player && player.membership == Membership.FAS && (!player.isHitler && $r.players.length > 5))
+
+// function getNameColor(id: string, isHitler: boolean, isDead: boolean, membership: Membership) {
+//   console.log(membership)
+//   if (id === $r.selfId) {
+//     return "text-yellow-500"
+//   } else if (isDead) {
+//     return "text-gray-500"
+//   } else if (isHitler) {
+//     return "text-red-500"
+//   } else if (membership == Membership.FAS) {
+//     return "text-red-500"
+//   } else if (membership == Membership.LIB) {
+//     return "text-blue-500"
+//   } else {
+//     return "text-white"
+//   }
+// }
+
 </script>
 
-<main class="flex flex-col gap-2 xs:w-full md:w-1/2 m-2">
+<div class="min-h-screen p-4 flex items-start justify-center">
+  <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl shadow-2xl p-6 w-full max-w-2xl">
+    <h1 class="text-5xl text-center mb-8 text-red-700 tracking-wide font-bold">SECRET HITLER</h1>
 
-  <h1>room started: {$r.isStarted}</h1>
-
-  <div class="section">
-    <input class="input" type="text" bind:value={name}/>
-    {#if $r.players.find(player => player.id === $r.selfId)}
-      <input class="btn red" type="button" value="leave" onclick={() => roomLeave()}/>
-    {:else}
-      <input class="btn blue" type="button" value="join" onclick={() => roomJoin(name)}/>
-    {/if}
-  </div>
-
-  <hr>
-
-  <div class="section">
-    <input class="btn red" type="button" value="yes" onclick={() => vote(true)}/>
-    <input class="btn red" type="button" value="no" onclick={() => vote(false)}/>
-  </div>
-
-  <hr>
-
-  <div class="section">
-    <input class="btn blue" type="button" value="show" onclick={() => membershipShow($r.players[0].id)}/>
-  </div>
-
-  <hr>
-
-  {#if $r.players.length > 0 && $r.players[0].id === $r.selfId}
     <div class="section">
-      <input class="btn red" type="button" value="start" onclick={() => roomStart()}/>
-      <input class="btn red" type="button" value="clear" onclick={() => roomClear()}/>
-      <input class="btn red" type="button" value="vote_clear" onclick={() => voteClear()}/>
+
+      <div class="section-h">
+        <!-- room status -->
+        {$r.isStarted ? "🎮 In Progress" : "⏳ Waiting to Start"}
+
+        <div class="flex-grow"></div>
+
+        <!-- room leave -->
+        {#if player}
+          <button onclick={() => roomLeave()}>❌</button>
+        {/if}
+      </div>
+
+      <!-- player join -->
+      {#if !player}
+        <input class="input" type="text" placeholder="Enter your name to join the resistance..." bind:value={name} />
+        <button class="btn primary" onclick={() => roomJoin(name)} disabled={!name.trim()}> 🔑 Join Game </button>
+      {/if}
+
+      <!-- admin controls -->
+      {#if $r.players.length > 0 && $r.players[0].id === $r.selfId}
+        {#if !$r.isStarted} <button class="btn primary" onclick={() => roomStart()}> 🎯 Start Game </button> {/if}
+        <button class="btn secondary" onclick={() => roomClear()}> 🧹 Clear Room </button>
+        <button class="btn secondary" onclick={() => voteClear()}> 🗳️ Clear Votes </button>
+      {/if}
     </div>
-  {/if}
 
-  <hr>
 
-  {#if $r.players.length > 0 && $r.players.every(player => player.vote != undefined)}
-    {$r.players.filter(player => player.vote).length > ($r.players.length / 2) ? "success" : "failure"}
-  {/if}
-
-  {#each $r.players as player}
-    <p>{player.id ?? ">:("}</p>
-    <p>{player.name}</p>
-    {#if player.membership}
-      <p>membership: {player.membership}</p>
+    <!-- voting -->
+    {#if $r.players.find((player) => player.id === $r.selfId) && $r.isStarted}
+      <div class="section-title">🗳️ Voting</div>
+      <div class="section-h">
+        <button class="btn success w-full" onclick={() => vote(true)}> 👍🏻 Ja </button>
+        <button class="btn primary w-full" onclick={() => vote(false)}> 🖕🏻 Nein </button>
+      </div>
     {/if}
-    {#if player.vote != undefined}
-      <p>vote: {player.vote}</p>
-    {/if}
-    {#if player.isHitler}
-      <p>is hitler</p>
-    {/if}
-    {#if player.isDead}
-      <p>is dead</p>
-    {/if}
-    <br>
-  {/each}
 
-  {#each $r.shownMembership as playerId}
-    <p>{playerId}</p>
-  {/each}
+    <!-- vote results -->
+    {#if $r.players.length > 0 && $r.players.every((player) => player.vote != undefined)}
+      <div class="vote-result {$r.players.filter((player) => player.vote).length > $r.players.length / 2 ? 'success' : 'failure'}">
+        {#if $r.players.filter((player) => player.vote).length > $r.players.length / 2}
+          🎉 Vote Passed ({$r.players.filter((player) => player.vote).length}/{$r.players.length} votes)
+        {:else}
+          💥 Vote Failed ({$r.players.filter((player) => player.vote).length}/{$r.players.length} votes)
+        {/if}
+      </div>
+    {/if}
 
-</main>
+    <!-- players list -->
+    <div class="section-title">👥 Players ({$r.players.length})</div>
+    <div class="grid grid-cols-1 gap-4">
+      <!-- player list -->
+      {#each $r.players as player}
+        <div class="player-card flex flex-row {player.vote != null ? player.vote ? "border-r-green-500" : "border-r-red-500" : "border-r-slate-500"}">
+          <!-- <span class="{getNameColor(player.id, player.isHitler, player.isDead, player.membership)}"> -->
+          <span class="text-white">
+            {player.name}
+            <!-- ID: {player.id ?? "Unknown"} -->
+          </span>
+
+          <div class="flex-grow"></div>
+
+          {#if player.isHitler} 卍 {/if}
+        </div>
+      {/each}
+
+      <!-- no players -->
+      {#if $r.players.length == 0}
+        <div class="col-span-full text-center py-8 text-gray-400">
+          <div class="text-4xl mb-2">🏛️</div>
+          <div>No players have joined yet...</div>
+          <div class="text-sm mt-1">Be the first to join the resistance!</div>
+        </div>
+      {/if}
+    </div>
+
+    <!-- investigation results -->
+    <!-- {#if $r.shownMembership.length > 0} -->
+    <!--   <div class="section-title">🔍 Investigation Results</div> -->
+    <!--   <div class="bg-slate-700/50 border border-slate-600/30 p-4"> -->
+    <!--     {#each $r.shownMembership as playerId} -->
+    <!--       <div class="text-center text-lg"> -->
+    <!--         Player {playerId} has been investigated -->
+    <!--       </div> -->
+    <!--     {/each} -->
+    <!--   </div> -->
+    <!-- {/if} -->
+
+  </div>
+</div>

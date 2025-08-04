@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store'
 
-enum Membership {
+export enum Membership {
   LIB,
   FAS,
 }
