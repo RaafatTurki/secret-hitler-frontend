@@ -44,6 +44,15 @@ socket.on("event", (data) => {
     })
   }
 
+  if (data.msg === "room:kicked") {
+    console.log("room:kicked")
+    r.update(r => {
+      r.players = data.payload.room.players
+      r.isStarted = true
+      return r
+    })
+  }
+
   if (data.msg === "room:cleared") {
     console.log("room:cleared")
     clearRoomData()
@@ -120,6 +129,15 @@ export function roomLeave() {
 export function roomStart() {
   socket.emit("event", {
     msg: "room:start"
+  })
+}
+
+export function roomKick(playerId: string) {
+  socket.emit("event", {
+    msg: "room:kick",
+    payload: {
+      playerId
+    }
   })
 }
 
