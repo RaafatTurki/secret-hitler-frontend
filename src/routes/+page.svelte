@@ -1,5 +1,6 @@
 <script lang="ts">
 import {
+  membershipShow,
   roomClear,
   roomJoin,
   roomLeave,
@@ -9,33 +10,27 @@ import {
 } from "$lib/socket";
 import { Membership, r } from "$lib/store";
 
-let name = $state("");
-let showOwnSecrets = $state(false);
+let name = $state("")
+let showMembershipButtonCounter = $state(3)
 
 // player info
 const player = $derived($r.players.find((player) => player.id === $r.selfId))
-const canSeeAllMemberships = $derived(player && player.membership == Membership.FAS && (!player.isHitler && $r.players.length > 5))
 
-// function getNameColor(id: string, isHitler: boolean, isDead: boolean, membership: Membership) {
-//   console.log(membership)
-//   if (id === $r.selfId) {
-//     return "text-yellow-500"
-//   } else if (isDead) {
-//     return "text-gray-500"
-//   } else if (isHitler) {
-//     return "text-red-500"
-//   } else if (membership == Membership.FAS) {
-//     return "text-red-500"
-//   } else if (membership == Membership.LIB) {
-//     return "text-blue-500"
-//   } else {
-//     return "text-white"
-//   }
-// }
+function getNameColor(membership: Membership) {
+  if (membership == Membership.FAS) {
+    return "text-red-500"
+  } else if (membership == Membership.LIB) {
+    return "text-blue-500"
+  } else {
+    return "text-slate-500"
+  }
+}
 
 </script>
 
 <div class="min-h-screen p-4 flex items-start justify-center">
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl shadow-2xl p-6 w-full max-w-2xl">
     <h1 class="text-5xl text-center mb-8 text-red-700 tracking-wide font-bold">SECRET HITLER</h1>
 
@@ -93,16 +88,33 @@ const canSeeAllMemberships = $derived(player && player.membership == Membership.
     <div class="grid grid-cols-1 gap-4">
       <!-- player list -->
       {#each $r.players as player}
-        <div class="player-card flex flex-row {player.vote != null ? player.vote ? "border-r-green-500" : "border-r-red-500" : "border-r-slate-500"}">
-          <!-- <span class="{getNameColor(player.id, player.isHitler, player.isDead, player.membership)}"> -->
-          <span class="text-white">
+        <div class="player-card flex flex-row 
+          {player.vote != null ? player.vote ? "border-r-green-500" : "border-r-red-500" : "border-r-slate-500"}
+          {player.id == $r.selfId ? "border-l-white" : "border-l-slate-500" }
+          ">
+          <span class={$r.shownMemberships.includes(player.id) ? getNameColor(player.membership) : ""}>
             {player.name}
             <!-- ID: {player.id ?? "Unknown"} -->
+
+            {#if player.isHitler && $r.shownMemberships.includes(player.id)}
+              <span class="text-red-500">卍</span>
+            {/if}
           </span>
 
           <div class="flex-grow"></div>
 
-          {#if player.isHitler} 卍 {/if}
+
+          {#if player.id != $r.selfId}
+            <input type="button" value={"🔍 " + showMembershipButtonCounter} onclick={() => {
+              if (showMembershipButtonCounter > 0) {
+                showMembershipButtonCounter--
+              } else {
+                membershipShow(player.id)
+                showMembershipButtonCounter = 3
+              }
+            }} />
+          {/if}
+
         </div>
       {/each}
 
@@ -115,18 +127,5 @@ const canSeeAllMemberships = $derived(player && player.membership == Membership.
         </div>
       {/if}
     </div>
-
-    <!-- investigation results -->
-    <!-- {#if $r.shownMembership.length > 0} -->
-    <!--   <div class="section-title">🔍 Investigation Results</div> -->
-    <!--   <div class="bg-slate-700/50 border border-slate-600/30 p-4"> -->
-    <!--     {#each $r.shownMembership as playerId} -->
-    <!--       <div class="text-center text-lg"> -->
-    <!--         Player {playerId} has been investigated -->
-    <!--       </div> -->
-    <!--     {/each} -->
-    <!--   </div> -->
-    <!-- {/if} -->
-
   </div>
 </div>

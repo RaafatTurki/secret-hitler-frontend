@@ -1,7 +1,8 @@
 import { io } from "socket.io-client"
-import { r } from "./store"
+import { Membership, r, type Player } from "./store"
 
-export const socket = io("http://11.111.8.21:3030")
+// export const socket = io("http://11.111.8.21:3030")
+export const socket = io("http://11.111.6.11:3030")
 // export const socket = io("http://localhost:3030")
 
 socket.on("connect", () => {
@@ -17,7 +18,6 @@ socket.on("event", (data) => {
   console.log(data)
 
   if (data.msg === "room:joined") {
-    console.log("room:joined")
     r.update(state => {
       state.selfId = socket.id
       state.players = data.payload.room.players
@@ -27,7 +27,6 @@ socket.on("event", (data) => {
   }
 
   if (data.msg === "room:left") {
-    console.log("room:left")
     r.update(room => {
       room.players = data.payload.room.players
       room.isStarted = data.payload.room.isStarted
@@ -36,16 +35,27 @@ socket.on("event", (data) => {
   }
 
   if (data.msg === "room:started") {
-    console.log("room:started")
+    let shownMemberships: string[] = []
+
+    const player: Player = data.payload.room.players.find((player: Player) => player.id === socket.id)
+    if (player) {
+      if (player.membership == Membership.LIB || (player.isHitler && data.payload.room.players.length > 5)) {
+        shownMemberships.push(player.id)
+      } else {
+        shownMemberships = data.payload.room.players.map((player: Player) => player.id)
+        // .filter((player: Player) => player.membership == Membership.FAS)
+      }
+    }
+
     r.update(r => {
       r.players = data.payload.room.players
       r.isStarted = true
+      r.shownMemberships = shownMemberships
       return r
     })
   }
 
   if (data.msg === "room:kicked") {
-    console.log("room:kicked")
     r.update(r => {
       r.players = data.payload.room.players
       r.isStarted = true
@@ -54,12 +64,10 @@ socket.on("event", (data) => {
   }
 
   if (data.msg === "room:cleared") {
-    console.log("room:cleared")
     clearRoomData()
   }
 
   if (data.msg === "voted") {
-    console.log("room:voted")
     r.update(r => {
       r.players.forEach(player => {
         if (player.id === socket.id) {
@@ -71,7 +79,6 @@ socket.on("event", (data) => {
   }
 
   if (data.msg === "vote:result") {
-    console.log("vote:result")
     r.update(r => {
       r.players = data.payload.room.players
       r.isStarted = data.payload.room.isStarted
@@ -90,9 +97,8 @@ socket.on("event", (data) => {
   }
 
   if (data.msg === "membership:shown") {
-    console.log("membership:shown")
     r.update(r => {
-      r.shownMembership.push(data.payload.playerId)
+      r.shownMemberships.push(data.payload.playerId)
       return r
     })
   }
@@ -105,7 +111,7 @@ export function clearRoomData() {
     r.selfId = undefined
     r.players = []
     r.isStarted = false
-    r.shownMembership = []
+    r.shownMemberships = []
     return r
   })
 }

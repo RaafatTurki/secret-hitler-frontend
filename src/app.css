@@ -45,37 +45,8 @@ body {
 
 
 .player-card {
-  @apply bg-slate-700/50 p-2 transition-all flex-row border-1 border-b-slate-500 border-t-slate-500 border-l-slate-500 border-r-8;
+  @apply bg-slate-700/50 p-2 transition-all flex-row border-1 border-b-slate-500 border-t-slate-500 border-r-8 border-l-8;
 }
-
-.player-name {
-  @apply text-lg font-semibold text-gray-100 mb-1;
-}
-
-.player-info {
-  @apply text-sm text-gray-300 mb-1;
-}
-
-.player-status {
-  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
-}
-
-.player-status.fascist {
-  @apply bg-red-900/50 text-red-300 border border-red-800/50;
-}
-
-.player-status.liberal {
-  @apply bg-blue-900/50 text-blue-300 border border-blue-800/50;
-}
-
-.player-status.hitler {
-  @apply bg-gray-900 text-red-400 border border-red-600;
-}
-
-.player-status.dead {
-  @apply bg-gray-800 text-gray-400 border border-gray-600;
-}
-
 
 
 .vote-result {

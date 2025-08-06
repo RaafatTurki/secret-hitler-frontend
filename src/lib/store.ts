@@ -1,29 +1,28 @@
 import { writable } from 'svelte/store'
 
 export enum Membership {
-  LIB,
-  FAS,
+  LIB = "LIB",
+  FAS = "FAS",
 }
 
-interface Player {
+export interface Player {
   id: string
   name: string
   isHitler: boolean
-  isDead: boolean
   membership: Membership
   vote?: boolean
 }
 
-interface RoomData {
+export interface RoomData {
   isStarted: boolean
   selfId?: string
   players: Player[]
-  shownMembership: string[]
+  shownMemberships: string[]
 }
 
 export const r = writable<RoomData>({
-  isStarted: false,
   selfId: undefined,
+  isStarted: false,
   players: [],
-  shownMembership: []
+  shownMemberships: []
 })
